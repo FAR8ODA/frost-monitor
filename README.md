@@ -1,14 +1,14 @@
 # Frost Monitor
 
-My React + TypeScript screen that helps a grower spot frost risk across their farm, built against the provided mock API.
+my React + TypeScript screen that helps a grower spot frost risk across their farm, built against the provided mock API.
 
-> **Time spent:** about 2h 20m on Wednesday (7:09 pm to 9:35 pm) for the implementation, tests and this README, plus about 20 minutes the night before setting up the environment (Node, Vite, Vitest). Under the 3 hour limit.
+> **Time spent:** about 2h 25m on Wednesday (7:09 pm to 9:35 pm) for the implementation, tests and this README, plus about 20 minutes the night before setting up the environment (Node, Vite, Vitest). Under the 3 hour limit.
 
 ---
 
 ## Quick start
 
-we need Node 20.19+ (built with Node 26).
+we would need Node 20.19+ (built with Node 26).
 
 | Task | Command |
 | --- | --- |
@@ -17,19 +17,21 @@ we need Node 20.19+ (built with Node 26).
 | Run tests (watch mode) | `npm test` |
 | Run tests once | `npx vitest run` |
 | Type-check and build | `npm run build` |
+| Lint | `npm run lint` |
 
-`src/api/mockApi.ts` is committed exactly as provided, including `FAILURE_RATE = 0.05`.
+`src/api/mockApi.ts` is committed exactly as provided, including `FAILURE_RATE = 0.05`. Setting it to `1` locally shows the error state.
 
 ---
 
 ## What the grower sees
 
+| Question | Where it's answered |
 | --- | --- |
 | Which fields are at frost risk right now? | Overview table, at-risk fields sorted to the top with a "Frost risk" badge, a "2 of 8 fields at frost risk" summary, and a filter to show only at-risk fields |
 | Is it getting colder or warmer in a field? | "Trend vs last week" column, on every field and every station |
 | Which stations are coldest, and are any offline? | Detail panel (click a field): stations sorted coldest first, an "Offline" badge, the 7 daily lows with frost days highlighted, and an offline count per field in the overview |
 
-now with the provided api data: **South Slope (-3 °C)** and **River Flats (-2 °C)** are at risk. **Creekside (0.5 °C)** is the closest call. River Flats, Creekside and West Gate each have offline stations.
+With the provided data: **South Slope (-3 °C)** and **River Flats (-2 °C)** are at risk. **Creekside (0.5 °C)** is the closest call. River Flats, Creekside and West Gate each have offline stations.
 
 ---
 
@@ -48,7 +50,7 @@ src/
 
 **Data flow:** `mockApi` → `loadFarm()` → `summarizeFarm()` → `useAsync` state → `App` / `FieldDetail`
 
-
+| Decision | Why |
 | --- | --- |
 | Frost rules live in `frost.ts` as pure functions | Testable without React or the network, one place to change a rule, reusable outside this screen |
 | One load for the whole screen: fields + stations in parallel (`Promise.all`), then 14 days of readings | Small data set, so switching fields is instant with no second loading state. 14 days = 7 for frost risk + 7 before them for the trend |
@@ -59,10 +61,13 @@ src/
 
 **Build order:** frost logic → logic tests → data hook → overview with loading, error and empty states → detail panel → component tests → cleanup → README.
 
+**Deliberately left out:** a charting library (7 numbers + a trend arrow answer the question), routing and URL state, a data caching library, responsive layout tuning, and visual polish beyond clarity.
+
 ---
 
 ## 2. Edge cases and assumptions
 
+| Situation | How it's handled |
 | --- | --- |
 | Frost threshold | `0 °C or below` is inclusive, so exactly 0 °C counts as frost |
 | "Last 7 days" | `AS_OF_DATE` minus 6 days through `AS_OF_DATE` inclusive (Jan 9 to Jan 15). The computer clock is never used |
@@ -76,7 +81,7 @@ src/
 | Empty states | No fields, a filter that hides every row, and a field with no stations each show a message instead of an empty table |
 | Sorting | At-risk first, then coldest first. Fields and stations with no data sort last |
 
-**Feedback on the mock API** (left untouched as instructed):
+**Feedback on the mock API** (left unchanged as instructed):
 
 - A per-field summary endpoint (coldest low, risk, offline count) would avoid shipping every reading to the client.
 - Errors carry only a message. A status code or a "retryable" flag would let the UI decide when retrying makes sense.
@@ -84,7 +89,7 @@ src/
 
 ---
 
-## 3. Scale and reuse
+## 3. Scale and reuse (500 fields, 20,000 stations)
 
 | What breaks | Why | What I'd change |
 | --- | --- | --- |
@@ -97,6 +102,7 @@ src/
 
 **Shared component library candidates**
 
+| Component | Reuse |
 | --- | --- |
 | `StatusBadge` (risk, ok, offline) | Any status that needs text + icon, never colour alone |
 | `LoadState` (loading, error + retry, empty) | Every data-driven screen |
@@ -120,8 +126,9 @@ The frost rules and field/station views stay in this app since they're domain-sp
 
 **Why these:** the riskiest code is the frost logic, and its bugs hide at boundaries (the exact threshold, the window edge, missing data), so those get targeted tests. The real-data test confirms the rules produce the expected answer for this farm. The component test follows the main user story, including the failure path the brief emphasizes, and finds elements by role so it also checks the accessibility basics.
 
+Randomness is controlled so tests never flake: the component test fakes the three API calls, and the real-data test pins `Math.random` so the API never fails during the test.
 
-**if i had more time,**
+**Next with more time**
 
 - A test for fast field switching and unmounting mid-load (the late response guard)
 - A keyboard-only test of the full flow with `userEvent.tab()`
@@ -160,7 +167,7 @@ I used AI throughout, and chose models deliberately to stay efficient with token
 
 **What I did by hand**
 
-- wrote and edited the frost logic line by line, and wrote the code comments
+- Wrote and edited the frost logic line by line, and wrote the code comments
 - Made the final calls on the assumptions above (null handling, offline rule, trend threshold)
 - Manually tested the error state, the retry flow, keyboard-only navigation, and every value in the overview
 - Organized the tests and wrote the commit history
@@ -168,7 +175,8 @@ I used AI throughout, and chose models deliberately to stay efficient with token
 ---
 
 ## What I'd do next
+
 - A small sparkline chart per station instead of the number strip
 - Selected field and filter stored in the URL so views can be shared
 - Day boundaries in the farm's local time zone
--Dark theme; added as a small stretch after the core was done. Next I’d default it to the system setting and remember the choice
+- Dark theme: added as a small stretch after the core was done. Next I’d default it to the system setting and remember the choice

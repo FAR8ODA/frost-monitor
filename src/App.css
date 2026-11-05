@@ -144,3 +144,86 @@ button:focus-visible {
   background: #dbeafe;
   font-weight: 700;
 }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-toggle {
+  padding: 6px 12px;
+  border: 1px solid #cbd2d9;
+  border-radius: 999px;
+  background: white;
+  color: inherit;
+}
+
+/* Dark theme: only colours change, layout stays the same */
+[data-theme='dark'] {
+  color-scheme: dark;
+  color: #e4e7eb;
+  background: #12161c;
+}
+
+[data-theme='dark'] table,
+[data-theme='dark'] .theme-toggle {
+  background: #1c222b;
+}
+
+[data-theme='dark'] .theme-toggle {
+  border-color: #3e4c59;
+}
+
+[data-theme='dark'] th,
+[data-theme='dark'] td {
+  border-bottom-color: #2d3540;
+}
+
+[data-theme='dark'] .subtitle,
+[data-theme='dark'] .hint,
+[data-theme='dark'] caption,
+[data-theme='dark'] thead th,
+[data-theme='dark'] .crop {
+  color: #9aa5b1;
+}
+
+[data-theme='dark'] tr.selected {
+  background: #1e3350;
+}
+
+[data-theme='dark'] button.link {
+  color: #7cb7ff;
+}
+
+[data-theme='dark'] button:focus-visible {
+  outline-color: #7cb7ff;
+}
+
+[data-theme='dark'] .badge.risk,
+[data-theme='dark'] .error {
+  background: #4a1d1d;
+  color: #ffb4b4;
+  border-color: #8a3a3a;
+}
+
+[data-theme='dark'] .badge.ok {
+  background: #173524;
+  color: #a6e3b8;
+  border-color: #2f6b45;
+}
+
+[data-theme='dark'] .badge.offline {
+  background: #3d2e0a;
+  color: #f5d27a;
+  border-color: #7a5c14;
+}
+
+[data-theme='dark'] .lows li {
+  background: #262e38;
+}
+
+[data-theme='dark'] .lows li.cold {
+  background: #1e3a66;
+}

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AS_OF_DATE, getFields, getReadings, getStations } from './api/mockApi';
 import { PREV_WEEK_START, TREND_LABEL, WEEK_START, formatTemp, summarizeFarm } from './frost';
 import { useAsync } from './useAsync';
 import './App.css';
 import FieldDetail from './FieldDetail';
+
 
 // Loads everything the screen needs: all fields, all stations, and 14 days of
 // readings (7 for frost risk + the 7 before for the trend). Defined outside the
@@ -22,6 +23,12 @@ export default function App() {
   const { state, retry } = useAsync(loadFarm);
   const [onlyAtRisk, setOnlyAtRisk] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [dark, setDark] = useState(false);
+
+  // Put the theme on the <html> tag so the whole page (background included) switches
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  }, [dark]);
 
   if (state.status === 'loading') {
     return (
@@ -53,7 +60,12 @@ export default function App() {
 
   return (
     <main>
-      <h1>Frost Monitor</h1>
+      <div className="header">
+        <h1>Frost Monitor</h1>
+        <button className="theme-toggle" onClick={() => setDark(!dark)}>
+          {dark ? '☀ Light mode' : '☾ Dark mode'}
+        </button>
+      </div>
       <p className="subtitle">
         Data as of {AS_OF_DATE}. A field is at frost risk if any of its stations recorded
         0 °C or below from {WEEK_START} to {AS_OF_DATE}.

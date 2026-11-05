@@ -2,7 +2,7 @@
 
 My React + TypeScript screen that helps a grower spot frost risk across their farm, built against the provided mock API.
 
-> **Time spent:** about 2h 20m on Wednesday (7:09 pm to 9:30 pm) for the implementation, tests and this README, plus about 20 minutes the night before setting up the environment (Node, Vite, Vitest). Under the 3 hour limit.
+> **Time spent:** about 2h 20m on Wednesday (7:09 pm to 9:35 pm) for the implementation, tests and this README, plus about 20 minutes the night before setting up the environment (Node, Vite, Vitest). Under the 3 hour limit.
 
 ---
 
@@ -171,3 +171,4 @@ I used AI throughout, and chose models deliberately to stay efficient with token
 - A small sparkline chart per station instead of the number strip
 - Selected field and filter stored in the URL so views can be shared
 - Day boundaries in the farm's local time zone
+-Dark theme; added as a small stretch after the core was done. Next I’d default it to the system setting and remember the choice

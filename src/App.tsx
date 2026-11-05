@@ -3,6 +3,7 @@ import { AS_OF_DATE, getFields, getReadings, getStations } from './api/mockApi';
 import { PREV_WEEK_START, TREND_LABEL, WEEK_START, formatTemp, summarizeFarm } from './frost';
 import { useAsync } from './useAsync';
 import './App.css';
+import FieldDetail from './FieldDetail';
 
 // Loads everything the screen needs: all fields, all stations, and 14 days of
 // readings (7 for frost risk + the 7 before for the trend). Defined outside the
@@ -121,7 +122,7 @@ export default function App() {
       )}
 
       {selected ? (
-        <p>Selected: {selected.field.name} (detail panel comes in the next step)</p>
+        <FieldDetail summary={selected} />
       ) : (
         <p className="hint">Select a field to see its stations.</p>
       )}

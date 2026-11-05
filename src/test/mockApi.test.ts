@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addDays, AS_OF_DATE } from './mockApi';
+import { addDays, AS_OF_DATE } from '../api/mockApi';
 
 describe('addDays', () => {
   it('gives a 7-day window ending on AS_OF_DATE when going back 6 days', () => {

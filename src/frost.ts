@@ -1,9 +1,9 @@
 import { addDays, AS_OF_DATE } from './api/mockApi';
 import type { Field, Reading, Station } from './api/mockApi';
 
-// "This week": the 7 days ending on AS_OF_DATE, including it (2027-01-09 to 2027-01-15)
+// "This week": the 7 days ending on AS_OF_DATE, including it 
 export const WEEK_START = addDays(AS_OF_DATE, -6);
-// "Last week": the 7 days before that (2027-01-02 to 2027-01-08), only used for trends
+// "Last week": the 7 days before that , only used for trends
 export const PREV_WEEK_START = addDays(AS_OF_DATE, -13);
 export const PREV_WEEK_END = addDays(AS_OF_DATE, -7);
 

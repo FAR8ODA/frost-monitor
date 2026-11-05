@@ -1,122 +1,130 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import { AS_OF_DATE, getFields, getReadings, getStations } from './api/mockApi';
+import { PREV_WEEK_START, TREND_LABEL, WEEK_START, formatTemp, summarizeFarm } from './frost';
+import { useAsync } from './useAsync';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+// Loads everything the screen needs: all fields, all stations, and 14 days of
+// readings (7 for frost risk + the 7 before for the trend). Defined outside the
+// component so useAsync receives the same function on every render.
+async function loadFarm() {
+  const [fields, stations] = await Promise.all([getFields(), getStations()]);
+  const readings = await getReadings(
+    stations.map((s) => s.id),
+    PREV_WEEK_START,
+    AS_OF_DATE,
+  );
+  return summarizeFarm(fields, stations, readings);
 }
 
-export default App
+export default function App() {
+  const { state, retry } = useAsync(loadFarm);
+  const [onlyAtRisk, setOnlyAtRisk] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  if (state.status === 'loading') {
+    return (
+      <main>
+        <p role="status">Loading farm data...</p>
+      </main>
+    );
+  }
+
+  if (state.status === 'error') {
+    return (
+      <main>
+        <div role="alert" className="error">
+          <p>Couldn't load farm data: {state.message}</p>
+          <button onClick={retry}>Retry</button>
+        </div>
+      </main>
+    );
+  }
+
+  const fields = state.data;
+  const atRiskCount = fields.filter((f) => f.atRisk).length;
+  const visibleFields = onlyAtRisk ? fields.filter((f) => f.atRisk) : fields;
+  const selected = fields.find((f) => f.field.id === selectedId);
+
+  let emptyMessage = '';
+  if (fields.length === 0) emptyMessage = 'No fields found for this farm.';
+  else if (visibleFields.length === 0) emptyMessage = 'No fields are at frost risk right now.';
+
+  return (
+    <main>
+      <h1>Frost Monitor</h1>
+      <p className="subtitle">
+        Data as of {AS_OF_DATE}. A field is at frost risk if any of its stations recorded
+        0 °C or below from {WEEK_START} to {AS_OF_DATE}.
+      </p>
+
+      <p className="summary">
+        <strong>
+          {atRiskCount} of {fields.length} fields
+        </strong>{' '}
+        at frost risk
+      </p>
+
+      <label className="filter">
+        <input
+          type="checkbox"
+          checked={onlyAtRisk}
+          onChange={(e) => setOnlyAtRisk(e.target.checked)}
+        />
+        Show only fields at frost risk
+      </label>
+
+      {emptyMessage ? (
+        <p>{emptyMessage}</p>
+      ) : (
+        <table>
+          <caption>Fields at frost risk first, then coldest first</caption>
+          <thead>
+            <tr>
+              <th scope="col">Field</th>
+              <th scope="col">Crop</th>
+              <th scope="col">Coldest low (7 days)</th>
+              <th scope="col">Trend vs last week</th>
+              <th scope="col">Frost risk</th>
+              <th scope="col">Offline stations</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleFields.map((f) => (
+              <tr key={f.field.id} className={f.field.id === selectedId ? 'selected' : undefined}>
+                <th scope="row">
+                  <button
+                    className="link"
+                    aria-pressed={f.field.id === selectedId}
+                    onClick={() => setSelectedId(f.field.id)}
+                  >
+                    {f.field.name}
+                  </button>
+                </th>
+                <td>{f.field.crop}</td>
+                <td>{formatTemp(f.coldestC)}</td>
+                <td>{TREND_LABEL[f.trend]}</td>
+                <td>
+                  {f.atRisk ? (
+                    <span className="badge risk">
+                      <span aria-hidden="true">❄ </span>Frost risk
+                    </span>
+                  ) : (
+                    <span className="badge ok">No risk</span>
+                  )}
+                </td>
+                <td>{f.offlineCount === 0 ? 'None' : f.offlineCount}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {selected ? (
+        <p>Selected: {selected.field.name} (detail panel comes in the next step)</p>
+      ) : (
+        <p className="hint">Select a field to see its stations.</p>
+      )}
+    </main>
+  );
+}
